@@ -6,18 +6,24 @@ const app = express();
 // Middleware to parse JSON with larger limit for images
 app.use(express.json({ limit: '50mb' }));
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    }
+const getAiClient = () => {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY environment variable is missing. Please add it to your Vercel project settings.");
   }
-});
+  return new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+    httpOptions: {
+      headers: {
+        'User-Agent': 'aistudio-build',
+      }
+    }
+  });
+};
 
 // API Route for Plant Analysis
 app.post("/api/analyze-plant", async (req, res) => {
   try {
+    const ai = getAiClient();
     const { imageBase64, mimeType, language = "English", mode = "identify" } = req.body;
     if (!imageBase64) {
       return res.status(400).json({ error: "Image is required" });
@@ -48,6 +54,7 @@ app.post("/api/analyze-plant", async (req, res) => {
 // API Route for Chat
 app.post("/api/chat", async (req, res) => {
   try {
+    const ai = getAiClient();
     const { history, message, language = "English" } = req.body;
     
     const contents = [];
