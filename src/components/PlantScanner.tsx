@@ -9,6 +9,7 @@ export default function PlantScanner({ language }: { language: string; isDark?: 
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<"identify" | "diagnose">("identify");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,7 +39,7 @@ export default function PlantScanner({ language }: { language: string; isDark?: 
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ imageBase64: image, mimeType, language }),
+        body: JSON.stringify({ imageBase64: image, mimeType, language, mode }),
       });
       
       const data = await res.json();
@@ -71,8 +72,32 @@ export default function PlantScanner({ language }: { language: string; isDark?: 
           <Leaf className="w-5 h-5" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-emerald-950 dark:text-gray-100">Plant Identifier</h2>
-          <p className="text-sm text-emerald-600/80 dark:text-emerald-400/80">Upload a photo to get care instructions</p>
+          <h2 className="text-lg font-semibold text-emerald-950 dark:text-gray-100">
+            {mode === "identify" ? "Plant Identifier" : "Plant Doctor"}
+          </h2>
+          <p className="text-sm text-emerald-600/80 dark:text-emerald-400/80">
+            {mode === "identify" ? "Upload a photo to get care instructions" : "Upload a photo to diagnose issues"}
+          </p>
+        </div>
+        <div className="ml-auto flex bg-emerald-100/50 dark:bg-gray-800 p-1 rounded-lg">
+          <button
+            onClick={() => setMode("identify")}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+              mode === "identify" ? "bg-white dark:bg-gray-700 text-emerald-700 dark:text-emerald-400 shadow-sm" : "text-emerald-600/70 dark:text-emerald-500/70 hover:text-emerald-700 dark:hover:text-emerald-400"
+            )}
+          >
+            Identify
+          </button>
+          <button
+            onClick={() => setMode("diagnose")}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+              mode === "diagnose" ? "bg-white dark:bg-gray-700 text-emerald-700 dark:text-emerald-400 shadow-sm" : "text-emerald-600/70 dark:text-emerald-500/70 hover:text-emerald-700 dark:hover:text-emerald-400"
+            )}
+          >
+            Diagnose
+          </button>
         </div>
       </div>
 
@@ -114,7 +139,7 @@ export default function PlantScanner({ language }: { language: string; isDark?: 
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-sm"
               >
                 <ImageIcon className="w-5 h-5" />
-                Analyze Plant
+                {mode === "identify" ? "Analyze Plant" : "Diagnose Issue"}
               </button>
             )}
 

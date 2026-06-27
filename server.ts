@@ -22,9 +22,14 @@ async function startServer() {
   // API Route for Plant Analysis
   app.post("/api/analyze-plant", async (req, res) => {
     try {
-      const { imageBase64, mimeType, language = "English" } = req.body;
+      const { imageBase64, mimeType, language = "English", mode = "identify" } = req.body;
       if (!imageBase64) {
         return res.status(400).json({ error: "Image is required" });
+      }
+
+      let promptText = `Identify this plant and provide detailed care instructions including sunlight, watering, soil type, and any other specific needs. Format the output in Markdown. Please reply in the following language: ${language}.`;
+      if (mode === "diagnose") {
+        promptText = `Act as a Plant Doctor. Analyze this image of a plant and diagnose any issues, such as pests, diseases, or nutrient deficiencies. Provide a clear treatment plan to help the plant recover. Format the output in Markdown. Please reply in the following language: ${language}.`;
       }
 
       const response = await ai.models.generateContent({
@@ -32,7 +37,7 @@ async function startServer() {
         contents: {
           parts: [
             { inlineData: { data: imageBase64, mimeType: mimeType || "image/jpeg" } },
-            { text: `Identify this plant and provide detailed care instructions including sunlight, watering, soil type, and any other specific needs. Format the output in Markdown. Please reply in the following language: ${language}.` }
+            { text: promptText }
           ]
         },
       });
