@@ -17,13 +17,40 @@ export default function PlantScanner({ language }: { language: string; isDark?: 
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      const base64 = result.split(',')[1];
-      setImage(base64);
-      setMimeType(file.type);
-      setResult(null);
-      setError(null);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+        const max_size = 1000; // max dimension 1000px
+
+        if (width > height) {
+          if (width > max_size) {
+            height = Math.round((height * max_size) / width);
+            width = max_size;
+          }
+        } else {
+          if (height > max_size) {
+            width = Math.round((width * max_size) / height);
+            height = max_size;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Compress to JPEG with 0.7 quality to keep payload small
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+        const base64 = dataUrl.split(',')[1];
+        setImage(base64);
+        setMimeType("image/jpeg");
+        setResult(null);
+        setError(null);
+      };
+      img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
@@ -67,23 +94,25 @@ export default function PlantScanner({ language }: { language: string; isDark?: 
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-emerald-100 dark:border-gray-800 overflow-hidden transition-colors">
-      <div className="p-6 border-b border-emerald-50 dark:border-gray-800 bg-emerald-50/30 dark:bg-gray-800/50 flex items-center gap-3">
-        <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg text-emerald-600 dark:text-emerald-400">
-          <Leaf className="w-5 h-5" />
+      <div className="p-5 sm:p-6 border-b border-emerald-50 dark:border-gray-800 bg-emerald-50/30 dark:bg-gray-800/50 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg text-emerald-600 dark:text-emerald-400">
+            <Leaf className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-emerald-950 dark:text-gray-100">
+              {mode === "identify" ? "Plant Identifier" : "Plant Doctor"}
+            </h2>
+            <p className="text-sm text-emerald-600/80 dark:text-emerald-400/80">
+              {mode === "identify" ? "Upload to get care instructions" : "Upload to diagnose issues"}
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-semibold text-emerald-950 dark:text-gray-100">
-            {mode === "identify" ? "Plant Identifier" : "Plant Doctor"}
-          </h2>
-          <p className="text-sm text-emerald-600/80 dark:text-emerald-400/80">
-            {mode === "identify" ? "Upload a photo to get care instructions" : "Upload a photo to diagnose issues"}
-          </p>
-        </div>
-        <div className="ml-auto flex bg-emerald-100/50 dark:bg-gray-800 p-1 rounded-lg">
+        <div className="sm:ml-auto w-full sm:w-auto flex bg-emerald-100/50 dark:bg-gray-800 p-1 rounded-lg">
           <button
             onClick={() => setMode("identify")}
             className={cn(
-              "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+              "flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
               mode === "identify" ? "bg-white dark:bg-gray-700 text-emerald-700 dark:text-emerald-400 shadow-sm" : "text-emerald-600/70 dark:text-emerald-500/70 hover:text-emerald-700 dark:hover:text-emerald-400"
             )}
           >
@@ -92,7 +121,7 @@ export default function PlantScanner({ language }: { language: string; isDark?: 
           <button
             onClick={() => setMode("diagnose")}
             className={cn(
-              "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+              "flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
               mode === "diagnose" ? "bg-white dark:bg-gray-700 text-emerald-700 dark:text-emerald-400 shadow-sm" : "text-emerald-600/70 dark:text-emerald-500/70 hover:text-emerald-700 dark:hover:text-emerald-400"
             )}
           >
